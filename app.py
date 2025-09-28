@@ -69,7 +69,7 @@ def main_app_no_cv2():
             pil_image = Image.open(uploaded_file).convert("RGB")
             
             # Optional: Display the original image
-            st.sidebar.image(pil_image, caption='Original Image', use_column_width=True)
+            st.sidebar.image(pil_image, caption='Original Image', use_container_width=True)
 
             # 2. Detect and annotate
             # Add a temporary spinner to show processing is underway
