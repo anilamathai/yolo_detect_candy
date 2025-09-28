@@ -77,7 +77,7 @@ def main_app_no_cv2():
                 annotated_image_pil = detect_and_annotate(pil_image, model)
 
             # 3. Display in Streamlit
-            st.image(annotated_image_pil, caption='Detected Candies', use_column_width=True)
+            st.image(annotated_image_pil, caption='Detected Candies', use_container_width=True)
 
         except Exception as e:
             st.error(f"An error occurred during processing: {e}")
