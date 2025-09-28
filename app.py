@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 
 # --- CONFIGURATION ---
-MODEL_PATH = 'YOLO_V8_CANDY_DETECTION.pt' # ⚠️ IMPORTANT: Change this to your model path
+MODEL_PATH = 'my_model/my_model.pt'  # ⚠️ IMPORTANT: Change this to your model path
 
 # --- MODEL LOADING ---
 @st.cache_resource
