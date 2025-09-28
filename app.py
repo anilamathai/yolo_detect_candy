@@ -5,7 +5,7 @@ import numpy as np
 
 # --- CONFIGURATION ---
 # IMPORTANT: Use the correct path based on your repo structure
-MODEL_PATH = 'my_model/themy_model.pt' 
+MODEL_PATH = 'my_model/my_model.pt' 
 
 # --- MODEL LOADING ---
 @st.cache_resource
