@@ -1,31 +1,31 @@
 import streamlit as st
-import numpy as np
-from PIL import Image
-from ultralytics import YOLO
+from PIL import Image, ImageDraw, ImageFont
+import torch
 
-# Load model
-model = YOLO("my_model/my_model.pt")  # your trained model
+# Load your trained YOLO model (replace with your own .pt path)
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='my_model/yolo11s.pt', force_reload=True)
 
-st.title("YOLO Object Detection")
+st.title("YOLO Object Detection (Streamlit-friendly)")
 
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
+
 if uploaded_file is not None:
+    # Load image with PIL
     img = Image.open(uploaded_file).convert("RGB")
-    img_array = np.array(img)
-
-    # Run inference
-    results = model(img_array)
-
-    # Draw boxes on image
-    for box in results[0].boxes:
-        cls_id = int(box.cls.item())
-        label = model.names[cls_id]
-        conf = box.conf.item()
-        xyxy = box.xyxy[0].cpu().numpy().astype(int)
-        # Draw rectangle manually using PIL
-        from PIL import ImageDraw
-        draw = ImageDraw.Draw(img)
-        draw.rectangle(list(xyxy), outline="red", width=2)
-        draw.text((xyxy[0], xyxy[1]-10), f"{label} {conf:.2f}", fill="red")
-
-    st.image(img, caption="Detected objects", use_column_width=True)
+    
+    # Run YOLO inference
+    results = model(img)
+    
+    # Convert results to pandas DataFrame (bbox info)
+    df = results.pandas().xyxy[0]
+    
+    # Draw bounding boxes manually
+    draw = ImageDraw.Draw(img)
+    for _, row in df.iterrows():
+        xmin, ymin, xmax, ymax = row['xmin'], row['ymin'], row['xmax'], row['ymax']
+        label = f"{row['name']} {row['confidence']*100:.1f}%"
+        draw.rectangle([xmin, ymin, xmax, ymax], outline="red", width=3)
+        draw.text((xmin, ymin - 10), label, fill="red")
+    
+    st.image(img, caption="Detected Objects", use_column_width=True)
+    st.write("Detections:", df[['name', 'confidence']])
