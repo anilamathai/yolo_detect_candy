@@ -1,31 +1,46 @@
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont
-import torch
+from ultralytics import YOLO
+import cv2
+import numpy as np
+from PIL import Image
 
-# Load your trained YOLO model (replace with your own .pt path)
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='my_model/yolo11s.pt', force_reload=True)
+st.set_page_config(page_title="Candy Detection", layout="wide")
+st.title("🍬 Candy Detection App")
 
-st.title("YOLO Object Detection (Streamlit-friendly)")
+# Upload YOLO model
+model_file = st.file_uploader("Upload YOLO Model (.pt)", type=["pt"])
+if model_file:
+    with open("temp_model.pt", "wb") as f:
+        f.write(model_file.read())
+    model = YOLO("temp_model.pt")
+    st.success("Model loaded successfully!")
 
-uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
+# Choose source type
+source_type = st.radio("Select input type", ["Image", "Video"])
 
-if uploaded_file is not None:
-    # Load image with PIL
-    img = Image.open(uploaded_file).convert("RGB")
-    
-    # Run YOLO inference
-    results = model(img)
-    
-    # Convert results to pandas DataFrame (bbox info)
-    df = results.pandas().xyxy[0]
-    
-    # Draw bounding boxes manually
-    draw = ImageDraw.Draw(img)
-    for _, row in df.iterrows():
-        xmin, ymin, xmax, ymax = row['xmin'], row['ymin'], row['xmax'], row['ymax']
-        label = f"{row['name']} {row['confidence']*100:.1f}%"
-        draw.rectangle([xmin, ymin, xmax, ymax], outline="red", width=3)
-        draw.text((xmin, ymin - 10), label, fill="red")
-    
-    st.image(img, caption="Detected Objects", use_column_width=True)
-    st.write("Detections:", df[['name', 'confidence']])
+if source_type == "Image":
+    uploaded_image = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    if uploaded_image and model_file:
+        image = Image.open(uploaded_image)
+        frame = np.array(image)
+        results = model(frame)
+        annotated_frame = results[0].plot()
+        st.image(annotated_frame, caption="Detected Image", use_column_width=True)
+
+elif source_type == "Video":
+    uploaded_video = st.file_uploader("Upload a video", type=["mp4", "avi", "mov"])
+    if uploaded_video and model_file:
+        tfile = "temp_video.mp4"
+        with open(tfile, "wb") as f:
+            f.write(uploaded_video.read())
+
+        cap = cv2.VideoCapture(tfile)
+        stframe = st.empty()
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            results = model(frame)
+            annotated_frame = results[0].plot()
+            stframe.image(annotated_frame, channels="BGR")
+        cap.release()
